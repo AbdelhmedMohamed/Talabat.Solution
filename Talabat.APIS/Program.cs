@@ -1,10 +1,15 @@
 
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Talabat.APIS.Errors;
+using Talabat.APIS.Extensions;
 using Talabat.APIS.Helpers;
+using Talabat.APIS.MiddleWaer;
 using Talabat.Core.Entities;
 using Talabat.Core.Repositories.Contract;
 using Talabat.Repository;
 using Talabat.Repository.Data;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Talabat.APIS
 {
@@ -27,11 +32,11 @@ namespace Talabat.APIS
             });
 
 
-            builder.Services.AddScoped(typeof(IGenericRepository<>),typeof(GenericRepository<>));
+            //ApplicationServicesExtension.AddApplicationServices(builder.Services);
 
-            builder.Services.AddAutoMapper(typeof(MappingProfiles));
+            builder.Services.AddApplicationServices();  //Extension Method
 
-            var app = builder.Build();
+              var app = builder.Build();
 
             //Ask CLR Explicity for create Objicte from storecontext
 
@@ -59,11 +64,16 @@ namespace Talabat.APIS
 
 
             // Configure the HTTP request pipeline.
+
+            app.UseMiddleware<ExceptionMiddleware>();
+
+
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+               app.UseSwaggerMiddleWare();  
             }
+
+            app.UseStatusCodePagesWithReExecute("/Errors/{0}");
 
             app.UseHttpsRedirection();
 
