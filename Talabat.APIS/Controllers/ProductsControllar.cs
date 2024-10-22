@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Talabat.APIS.DTOs;
 using Talabat.APIS.Errors;
+using Talabat.APIS.Helpers;
 using Talabat.Core.Entities;
 using Talabat.Core.Repositories.Contract;
 using Talabat.Core.Specifications.ProductSpecification;
@@ -31,19 +32,27 @@ namespace Talabat.APIS.Controllers
 
         [HttpGet]
 
-        public async Task<ActionResult<IEnumerable<ProductToReturnDto>>> GetProducts()
+        public async Task<ActionResult<IReadOnlyList<ProductDto>>> GetProducts([FromQuery] ProductSpecParams specParams)
         {
-            var spac = new ProductWithBrandAndCategorySpecification();
+            var spac = new ProductWithBrandAndCategorySpecification(specParams);
 
             var products = await _productRepo.GetAllWhithSpacAsync(spac);
 
-            return Ok(_mapper.Map<IEnumerable<Product>, IEnumerable<ProductToReturnDto>>(products)); //200
+            var data = _mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductDto>>(products);
+
+            var countSpec = new ProductWithFilterationForCountSpec(specParams);
+
+            var count = await _productRepo.GetCountAsync(countSpec);
+
+
+            return Ok(new Pagination<ProductDto>(specParams.PageSize , specParams.PageIndex, count , data)); //200
+
         }
 
-        [ProducesResponseType(typeof(ProductToReturnDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
         [HttpGet("{id}")]
-        public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id)
+        public async Task<ActionResult<ProductDto>> GetProduct(int id)
         {
             var spac = new ProductWithBrandAndCategorySpecification(id);
 
@@ -53,7 +62,7 @@ namespace Talabat.APIS.Controllers
             {
                 return NotFound(new ApiResponse(404));
             }
-            return Ok(_mapper.Map<Product , ProductToReturnDto >(product));
+            return Ok(_mapper.Map<Product , ProductDto>(product));
         }
 
         [HttpGet("brands")]

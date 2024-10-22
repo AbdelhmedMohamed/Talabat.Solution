@@ -20,11 +20,11 @@ namespace Talabat.Repository
             _dbcontext = dbcontext;
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync()
+        public async Task<IReadOnlyList<T>> GetAllAsync()
         {
             if(typeof(T) == typeof(Product))
             {
-                return  (IEnumerable<T>) await _dbcontext.Set<Product>().Include(p => p.Brand).Include(p => p.Category).ToListAsync();
+                return  (IReadOnlyList<T>) await _dbcontext.Set<Product>().Include(p => p.Brand).Include(p => p.Category).ToListAsync();
             }
            return await _dbcontext.Set<T>().ToListAsync();
         }
@@ -33,23 +33,39 @@ namespace Talabat.Repository
         public async Task<T> GetAsync(int id)
         {
             
-            if (typeof(T) == typeof(Product))
-            {
+           if (typeof(T) == typeof(Product))
+           {
                 return await _dbcontext.Set<Product>().Where(p=>p.Id == id).Include(p=>p.Brand).Include(p=>p.Category).FirstOrDefaultAsync() as T ;
             }
                 return await _dbcontext.Set<T>().FindAsync(id);
         }
 
+        ///================================
 
-        public async Task<IEnumerable<T>> GetAllWhithSpacAsync(ISpecification<T> spac)
+
+        public async Task<IReadOnlyList<T>> GetAllWhithSpacAsync(ISpecification<T> spac)
         {
-            return await SpecificationEvaluator<T>.GetQuery(_dbcontext.Set<T>(), spac).ToListAsync();
+            return await ApplySpacification(spac).ToListAsync();
         }
 
+       
 
         public async Task<T> GetWhithSpacAsync(ISpecification<T> spac)
         {
-            return await SpecificationEvaluator<T>.GetQuery(_dbcontext.Set<T>(), spac).FirstOrDefaultAsync();  
+            return await ApplySpacification(spac).FirstOrDefaultAsync();  
         }
+
+        public async Task<int> GetCountAsync(ISpecification<T> spac)
+        {
+           return await ApplySpacification(spac).CountAsync();
+        }
+
+
+        private  IQueryable<T> ApplySpacification(ISpecification<T> spac)
+        {
+            return SpecificationEvaluator<T>.GetQuery(_dbcontext.Set<T>(), spac);
+        }
+
+        
     }
 }

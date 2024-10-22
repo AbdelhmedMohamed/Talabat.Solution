@@ -1,14 +1,18 @@
 
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 using Talabat.APIS.Errors;
 using Talabat.APIS.Extensions;
 using Talabat.APIS.Helpers;
 using Talabat.APIS.MiddleWaer;
 using Talabat.Core.Entities;
+using Talabat.Core.Entities.Identity;
 using Talabat.Core.Repositories.Contract;
 using Talabat.Repository;
 using Talabat.Repository.Data;
+using Talabat.Repository.Data.Identity;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Talabat.APIS
@@ -31,10 +35,29 @@ namespace Talabat.APIS
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
 
+            builder.Services.AddDbContext<AppIdentityDbContext>(options =>
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
+            });
+
+
+            builder.Services.AddSingleton<IConnectionMultiplexer>((serviceProvider)=>
+            {
+                var connection = builder.Configuration.GetConnectionString("Redis");
+                return ConnectionMultiplexer.Connect(connection);
+            }
+            ); 
+
 
             //ApplicationServicesExtension.AddApplicationServices(builder.Services);
 
             builder.Services.AddApplicationServices();  //Extension Method
+            builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+            {
+
+            }).AddEntityFrameworkStores<AppIdentityDbContext>();
+
+
 
               var app = builder.Build();
 
@@ -42,15 +65,19 @@ namespace Talabat.APIS
 
             using var scope = app.Services.CreateScope();
             var services = scope.ServiceProvider;
-            var _dbcontext = services.GetRequiredService<StoreContext>();
+            var _dbcontext = services.GetRequiredService<StoreContext>(); //Explicitly
+            var _IdentityDbContext = services.GetRequiredService<AppIdentityDbContext>();
+            var _userManager = services.GetRequiredService<UserManager<AppUser>>(); 
 
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
 
 
             try
             {
-                await _dbcontext.Database.MigrateAsync();
-                await StoreContextSeed.SeedAsync(_dbcontext);
+                await _dbcontext.Database.MigrateAsync(); //Update DataBase
+                await StoreContextSeed.SeedAsync(_dbcontext); //Data Seeding
+                await _IdentityDbContext.Database.MigrateAsync(); //Update Identity DataBase
+                await AppIdentityDbContextSeed.SeedUserAsync(_userManager);
             }
             catch (Exception ex)
             {

@@ -4,7 +4,7 @@ using Talabat.Core.Entities;
 
 namespace Talabat.APIS.Helpers
 {
-    public class ProductPictureUrlResolver : IValueResolver<Product, ProductToReturnDto, string>
+    public class ProductPictureUrlResolver : IValueResolver<Product, ProductDto, string>
     {
         private readonly IConfiguration _configuration;
 
@@ -12,7 +12,7 @@ namespace Talabat.APIS.Helpers
         {
             _configuration = configuration;
         }
-        public string Resolve(Product source, ProductToReturnDto destination, string destMember, ResolutionContext context)
+        public string Resolve(Product source, ProductDto destination, string destMember, ResolutionContext context)
         {
             if(!string.IsNullOrEmpty(source.PictureUrl))
             {
