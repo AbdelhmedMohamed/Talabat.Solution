@@ -1,8 +1,11 @@
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
+using System.Text;
 using Talabat.APIS.Errors;
 using Talabat.APIS.Extensions;
 using Talabat.APIS.Helpers;
@@ -10,9 +13,11 @@ using Talabat.APIS.MiddleWaer;
 using Talabat.Core.Entities;
 using Talabat.Core.Entities.Identity;
 using Talabat.Core.Repositories.Contract;
+using Talabat.Core.Services.Contract;
 using Talabat.Repository;
 using Talabat.Repository.Data;
 using Talabat.Repository.Data.Identity;
+using Talabat.Service;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Talabat.APIS
@@ -56,7 +61,26 @@ namespace Talabat.APIS
             {
 
             }).AddEntityFrameworkStores<AppIdentityDbContext>();
+            builder.Services.AddAuthentication().AddJwtBearer(JwtBearerDefaults.AuthenticationScheme , options =>
+            {
 
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["JWT:ValidIssure"],
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["JWT:ValidAudience"],
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:AuthKey"] ?? string.Empty))
+                };
+
+            });
+
+
+
+            builder.Services.AddScoped(typeof(IAuthService) ,typeof(AuthService));
 
 
               var app = builder.Build();

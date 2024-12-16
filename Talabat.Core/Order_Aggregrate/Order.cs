@@ -13,7 +13,7 @@ namespace Talabat.Core.Order_Aggregrate
         {
             
         }
-        public Order(string puyerEmail, Address shippingAddress, DeliveryMethod deliveryMethod, ICollection<OrderItem> items, decimal subTotal)
+        public Order(string puyerEmail, Address shippingAddress, DeliveryMethod deliveryMethod, ICollection<OrderItem> items, decimal subTotal ,string paymentIntentId )
         {
             PuyerEmail = puyerEmail;
            
@@ -21,6 +21,7 @@ namespace Talabat.Core.Order_Aggregrate
             DeliveryMethod = deliveryMethod;
             Items = items;
             SubTotal = subTotal;
+            PaymentIntentId = paymentIntentId;
         }
 
         public string  PuyerEmail { get; set; }

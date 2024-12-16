@@ -44,9 +44,14 @@ namespace Talabat.Core.Specifications.ProductSpecification
                 AddOrderBy(p => p.Name);  
             }
 
-            ApplyPagination( (spec.PageIndex -1) * spec.PageSize  , spec.PageSize ); 
+            if (spec.PageSize != 0)
+            {
+                ApplyPagination((spec.PageIndex - 1) * spec.PageSize, spec.PageSize);
+            }
+
 
         }
+
         public ProductWithBrandAndCategorySpecification(int id) :base(p => p.Id == id)
         {
             Includes.Add(p => p.Brand);

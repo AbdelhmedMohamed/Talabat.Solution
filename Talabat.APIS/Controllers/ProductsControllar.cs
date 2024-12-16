@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Talabat.APIS.DTOs;
@@ -29,19 +31,20 @@ namespace Talabat.APIS.Controllers
             _mapper = mapper;
         }
 
-
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [CachedAttribute(300)]
         [HttpGet]
 
         public async Task<ActionResult<IReadOnlyList<ProductDto>>> GetProducts([FromQuery] ProductSpecParams specParams)
         {
             var spac = new ProductWithBrandAndCategorySpecification(specParams);
 
+
+
             var products = await _productRepo.GetAllWhithSpacAsync(spac);
 
             var data = _mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductDto>>(products);
-
             var countSpec = new ProductWithFilterationForCountSpec(specParams);
-
             var count = await _productRepo.GetCountAsync(countSpec);
 
 
